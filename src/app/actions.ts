@@ -7,6 +7,7 @@ import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import type { GoalHorizon, GoalStatus } from "@/db/schema";
+import { deleteConversation } from "@/lib/conversations";
 import {
   addStep,
   createGoal,
@@ -150,5 +151,11 @@ export async function moveStepAction(stepId: string, direction: "up" | "down"): 
 
 export async function deleteStepAction(stepId: string): Promise<void> {
   await deleteStep(stepId);
+  refresh();
+}
+
+export async function deleteConversationAction(conversationId: string, isCurrent: boolean): Promise<void> {
+  await deleteConversation(conversationId);
+  if (isCurrent) redirect("/chat");
   refresh();
 }

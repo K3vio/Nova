@@ -1,9 +1,11 @@
+import type { BetaMessageParam } from "@anthropic-ai/sdk/resources/beta/messages";
 import {
   type AnySQLiteColumn,
   index,
   integer,
   sqliteTable,
   text,
+  uniqueIndex,
 } from "drizzle-orm/sqlite-core";
 
 const id = () =>
@@ -87,9 +89,38 @@ export const progressEntries = sqliteTable(
   (t) => [index("progress_goal_idx").on(t.goalId, t.createdAt)],
 );
 
+export const conversations = sqliteTable("conversations", {
+  id: id(),
+  title: text("title").notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
+export const chatRoles = ["user", "assistant", "system"] as const;
+
+// Messages exactly as sent to / received from the Claude API, replayed
+// verbatim on later turns. Never edit a stored message: Claude's thinking
+// blocks are tied to the conversation history that produced them.
+export const chatMessages = sqliteTable(
+  "chat_messages",
+  {
+    id: id(),
+    conversationId: text("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    position: integer("position").notNull(),
+    role: text("role", { enum: chatRoles }).notNull(),
+    content: text("content", { mode: "json" }).notNull().$type<BetaMessageParam["content"]>(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("chat_messages_position_idx").on(t.conversationId, t.position)],
+);
+
 export type Goal = typeof goals.$inferSelect;
 export type Step = typeof steps.$inferSelect;
 export type ProgressEntry = typeof progressEntries.$inferSelect;
 export type GoalHorizon = (typeof goalHorizons)[number];
 export type GoalStatus = (typeof goalStatuses)[number];
 export type ProgressSource = (typeof progressSources)[number];
+export type Conversation = typeof conversations.$inferSelect;
+export type ChatMessage = typeof chatMessages.$inferSelect;

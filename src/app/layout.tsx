@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { SparkleIcon } from "@/components/icons";
+import { NavLinks } from "@/components/nav-links";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -34,12 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               </span>
               Nova
             </Link>
-            <Link
-              href="/"
-              className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
-            >
-              Goals
-            </Link>
+            <NavLinks />
           </nav>
         </header>
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 sm:py-10">

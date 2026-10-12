@@ -166,6 +166,26 @@ export async function getGoal(id: string): Promise<GoalDetail | null> {
   };
 }
 
+export async function getStep(id: string): Promise<Step | null> {
+  return (await db.select().from(steps).where(eq(steps.id, id)).get()) ?? null;
+}
+
+/** Every goal with its ordered steps, soonest due first. */
+export async function listGoalsWithSteps(): Promise<(GoalSummary & { steps: Step[] })[]> {
+  const [allGoals, allSteps] = await Promise.all([
+    db.select().from(goals),
+    db.select().from(steps).orderBy(asc(steps.position)),
+  ]);
+  const stepsByGoal = new Map<string, Step[]>();
+  for (const step of allSteps) {
+    stepsByGoal.set(step.goalId, [...(stepsByGoal.get(step.goalId) ?? []), step]);
+  }
+  return allGoals.sort(byDueDate).map((goal) => {
+    const goalSteps = stepsByGoal.get(goal.id) ?? [];
+    return { ...summarize(goal, goalSteps), steps: goalSteps };
+  });
+}
+
 /** Long-term goals that a short-term goal can be linked to. */
 export async function listParentOptions(): Promise<Pick<Goal, "id" | "title">[]> {
   return db
